@@ -1,0 +1,11 @@
+langchain
+langchain-google-genai
+langchain-community
+langchain-huggingface
+langgraph
+fastapi
+uvicorn
+pydantic
+python-dotenv
+faiss-cpu
+sentence-transformers

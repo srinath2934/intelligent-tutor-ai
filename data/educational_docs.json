@@ -1,0 +1,32 @@
+[
+    {
+        "id": "1",
+        "title": "Mars overview",
+        "content": "Mars is the fourth planet from the Sun and the second-smallest planet in the Solar System. It is often referred to as the 'Red Planet' because the iron oxide prevalent on its surface gives it a reddish appearance. Mars is a terrestrial planet with a thin atmosphere, and has surface features reminiscent of both the impact craters of the Moon, and the valleys, deserts, and polar ice caps of Earth. The days and seasons are comparable to those of Earth, because the rotational period as well as the tilt of the rotational axis relative to the ecliptic plane are similar."
+    },
+    {
+        "id": "2",
+        "title": "Moons of Mars",
+        "content": "Mars has two small and irregularly shaped moons, Phobos and Deimos. Phobos is about 14 miles (22 kilometers) across, while Deimos is even smaller, at about 8 miles (13 kilometers) across. Phobos means 'fear' and Deimos means 'panic' or 'dread' in Greek. They are thought to be captured asteroids. Phobos orbits so incredibly close to Mars that it whips around the planet three times a day. Eventually, the gravitational tidal forces from Mars will pull Phobos apart, creating a ring around the planet, or cause it to crash into the surface."
+    },
+    {
+        "id": "3",
+        "title": "Water on Mars",
+        "content": "Liquid water cannot exist on the surface of Mars due to low atmospheric pressure, which is less than 1% of Earth's. However, the two polar ice caps appear to be made largely of water. In the distant past, Mars was likely a much warmer and wetter world. Giant river valleys and dry lake beds indicate that water flowed on the surface billions of years ago. Today, scientists continue to search for signs of ancient life in these dried-up regions, such as the Jezero Crater, where the Perseverance rover is currently exploring."
+    },
+    {
+        "id": "4",
+        "title": "Gravity",
+        "content": "Gravity is the fundamental force by which all things with mass or energy are brought toward one another. On Earth, gravity gives weight to physical objects, and the Moon's gravity causes the tides of the oceans. The gravitational pull of the Sun keeps Earth and the other planets in their orbits. The gravity on Mars is only 38% of the gravity on Earth. This means that if you weigh 100 pounds on Earth, you would only weigh 38 pounds on Mars, and you could jump nearly three times higher!"
+    },
+    {
+        "id": "5",
+        "title": "The Solar System",
+        "content": "Our solar system consists of our star, the Sun, and everything bound to it by gravity. This includes the eight planets (Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune), dozens of moons, and millions of asteroids, comets, and meteoroids. The solar system formed 4.6 billion years ago from the gravitational collapse of a giant interstellar molecular cloud. The four inner system planets—Mercury, Venus, Earth, and Mars—are terrestrial planets, being composed primarily of rock and metal. The four giant planets of the outer system are substantially more massive and are composed mostly of gases (Jupiter and Saturn) and ices (Uranus and Neptune)."
+    },
+    {
+        "id": "6",
+        "title": "Jupiter (The Gas Giant)",
+        "content": "Jupiter is the fifth planet from the Sun and the largest in the Solar System. It is a gas giant with a mass more than two and a half times that of all the other planets in the Solar System combined, but slightly less than one-thousandth the mass of the Sun. Jupiter is primarily composed of hydrogen, but a quarter of its mass is helium. It lacks a well-defined solid surface. One of its most famous features is the Great Red Spot, a giant storm that is larger than Earth and has raged for hundreds of years. Jupiter has 95 known moons, including the four large Galilean moons: Io, Europa, Ganymede, and Callisto."
+    }
+]
