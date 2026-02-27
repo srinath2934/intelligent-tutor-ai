@@ -22,6 +22,16 @@ class TutorResponse(BaseModel):
         description="e.g., 'showMars', 'showGravitySim', 'startQuiz' or None"
     )
     quizData: Optional[QuizData] = Field(None, description="Provide this if a quiz is requested.")
+    suggestedTopics: Optional[List[str]] = Field(
+        None, 
+        description="2-3 clickable topic suggestions for the student, e.g. ['Tell me about Saturn', 'What are black holes?', 'Quiz me on Mars']"
+    )
+    hintText: Optional[str] = Field(
+        None, 
+        description="A short, encouraging hint or fun fact to display as a tooltip/callout in the UI"
+    )
+    score: Optional[int] = Field(None, description="The student's updated point score if points were just awarded.")
+    badges: Optional[List[str]] = Field(None, description="The list of badges this student has earned.")
     emotionalTone: str = Field(..., description="'encouraging', 'challenging', 'supportive'")
     confidence: float = Field(..., description="0.0-1.0 how certain tutor is")
 

@@ -5,6 +5,7 @@ import json
 import asyncio
 from app.agent import tutor_session, agent
 from langchain_core.messages import HumanMessage
+import app.db as db
 import os
 
 app = FastAPI(title="Intelligent Tutor API")
@@ -37,7 +38,8 @@ async def websocket_tutor(websocket: WebSocket, student_id: str):
             # Send start event
             await websocket.send_text(json.dumps({"type": "start"}))
 
-            # Stream events
+            # Single API call — stream AND get final response
+            result = None
             async for event in agent.astream_events(
                 {"messages": [HumanMessage(content=question)]},
                 config={"configurable": {"thread_id": student_id}},
@@ -58,11 +60,13 @@ async def websocket_tutor(websocket: WebSocket, student_id: str):
                         })
                     )
             
-            # Final structured response
-            final = await tutor_session(question, student_id)
-            await websocket.send_text(
-                json.dumps({"type": "final", "response": final.model_dump()})
-            )
+            # Get the structured response from the SAME invocation (no second API call)
+            state = await agent.aget_state(config={"configurable": {"thread_id": student_id}})
+            final = state.values.get("structured_response")
+            if final:
+                await websocket.send_text(
+                    json.dumps({"type": "final", "response": final.model_dump()})
+                )
     
     except Exception as e:
         print(f"WebSocket Error: {e}")
@@ -78,3 +82,95 @@ async def http_tutor(student_id: str, question: str):
     """Non-streaming endpoint."""
     response = await tutor_session(question, student_id)
     return {"response": response.model_dump()}
+
+@app.get("/progress/{student_id}")
+async def get_progress(student_id: str):
+    """Return a student's saved score and badges from the database."""
+    return db.get_progress(student_id)
+
+# ─────────────────────────────────────────────
+#  New endpoints for stellar-learning-journey UI
+# ─────────────────────────────────────────────
+
+from pydantic import BaseModel
+from typing import List, Optional
+import os
+
+class LessonProgressBody(BaseModel):
+    score: int
+    completed: bool
+    badges: List[str] = []
+    completedAt: Optional[str] = None
+
+@app.post("/api/progress/{lesson_id}")
+async def save_lesson_progress(lesson_id: str, body: LessonProgressBody, student_id: str = "student_unique_123"):
+    """Save lesson progress (score + badges) to SQLite from the new UI."""
+    db.save_lesson_progress(
+        student_id=student_id,
+        lesson_id=lesson_id,
+        score=body.score,
+        completed=body.completed,
+        badges=body.badges,
+        completed_at=body.completedAt
+    )
+    # Also update the global badge counter
+    if body.badges:
+        for badge in body.badges:
+            db.add_score_and_badge(student_id, 0, badge)
+    db.add_score_and_badge(student_id, body.score)
+    return {"status": "saved"}
+
+@app.get("/api/progress/overview")
+async def get_overview(student_id: str = "student_unique_123"):
+    """Return all lesson progress records for the student."""
+    return db.get_all_lesson_progress(student_id)
+
+@app.get("/api/quiz/{lesson_topic}")
+async def generate_quiz(lesson_topic: str):
+    """Generate AI quiz questions for a given lesson topic using the LLM."""
+    from langchain_core.messages import HumanMessage
+    from app.agent import model
+    import re
+
+    prompt = f"""You are a science tutor generating quiz questions for children about the topic: "{lesson_topic}".
+
+Generate exactly 3 multiple-choice quiz questions in the following JSON format:
+{{
+  "questions": [
+    {{
+      "id": "q1",
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctIndex": 0,
+      "explanation": "Brief explanation of the answer."
+    }}
+  ]
+}}
+
+Rules:
+- Questions must be fun, engaging, and appropriate for ages 8-14.
+- The correctIndex is 0-based (0=first option).
+- Return ONLY the JSON, no extra text.
+"""
+    try:
+        response = await model.ainvoke([HumanMessage(content=prompt)])
+        raw = response.content.strip()
+        # Extract JSON from markdown code fences if present
+        json_match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if json_match:
+            data = json.loads(json_match.group())
+            return data
+        return json.loads(raw)
+    except Exception as e:
+        # Fallback static questions if AI fails
+        return {
+            "questions": [
+                {
+                    "id": "q1",
+                    "question": f"What is a key fact about {lesson_topic}?",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correctIndex": 0,
+                    "explanation": "Great job exploring this topic!"
+                }
+            ]
+        }
