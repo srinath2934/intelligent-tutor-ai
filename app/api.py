@@ -1,22 +1,65 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import json
 import asyncio
+import re
 from app.agent import tutor_session, agent
 from langchain_core.messages import HumanMessage
 import app.db as db
 import os
 
-app = FastAPI(title="Intelligent Tutor API")
+# ─── Rate Limiter ────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+
+app = FastAPI(
+    title="Intelligent Tutor API",
+    docs_url=None,      # Disable Swagger UI in production
+    redoc_url=None,     # Disable ReDoc in production
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ─── CORS — restrict to known origins ────────────────────────
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    os.getenv("FRONTEND_URL", ""),  # production URL from .env
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[o for o in ALLOWED_ORIGINS if o],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
+
+# ─── Input Sanitization ──────────────────────────────────────
+MAX_INPUT_LENGTH = 500
+BLOCKED_PATTERNS = re.compile(
+    r"(<script|<iframe|javascript:|on\w+=|SELECT\s+\*|DROP\s+TABLE)",
+    re.IGNORECASE
+)
+
+def sanitize_input(text: str) -> str:
+    """Strip dangerous content and enforce length limits."""
+    if not text or not isinstance(text, str):
+        raise HTTPException(status_code=400, detail="Invalid input")
+    text = text.strip()
+    if len(text) > MAX_INPUT_LENGTH:
+        raise HTTPException(status_code=400, detail=f"Input too long. Max {MAX_INPUT_LENGTH} characters.")
+    if BLOCKED_PATTERNS.search(text):
+        raise HTTPException(status_code=400, detail="Input contains disallowed content")
+    # Strip HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+    return text
+
 
 from fastapi.responses import HTMLResponse
 

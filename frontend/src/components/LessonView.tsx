@@ -11,6 +11,7 @@ type Step = "intro" | "explore" | "quiz" | "reward";
 
 interface LessonViewProps {
   lesson: Lesson;
+  studentId: string;
   onBack: () => void;
 }
 
@@ -19,9 +20,7 @@ const STEP_LABELS = ["Intro", "Explore", "Quiz", "Reward"];
 
 const stepIndex = (s: Step) => STEPS.indexOf(s);
 
-const STUDENT_ID = "student_unique_123";
-
-const LessonView = ({ lesson, onBack }: LessonViewProps) => {
+const LessonView = ({ lesson, studentId, onBack }: LessonViewProps) => {
   const [step, setStep] = useState<Step>("intro");
   const [score, setScore] = useState(0);
   const [aiQuestions, setAiQuestions] = useState<QuizQuestion[] | null>(null);
@@ -75,13 +74,13 @@ const LessonView = ({ lesson, onBack }: LessonViewProps) => {
       badges,
     });
 
-    // Save to server DB
+    // Save to server DB with real student ID
     try {
-      await fetch(`/api/progress/${lesson.id}`, {
+      await fetch(`/api/progress/${lesson.id}?student_id=${studentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          score: s * 10, // 10 points per correct answer
+          score: s * 10,
           completed: true,
           badges,
           completedAt: new Date().toISOString(),

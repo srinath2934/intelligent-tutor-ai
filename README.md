@@ -1,6 +1,6 @@
 # 🚀 Intelligent Space Tutor AI
 
-> An AI-powered educational platform that teaches children about space using **LangGraph agents**, **RAG (Retrieval-Augmented Generation)**, dynamic quizzes, and a real-time streaming chatbot — all wrapped in a stunning space-themed UI.
+> An AI-powered educational platform that teaches children about space using **LangGraph agents**, **RAG (Retrieval-Augmented Generation)**, dynamic AI-generated quizzes, and a real-time streaming chatbot — wrapped in a stunning space-themed UI.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-green?logo=fastapi)](https://fastapi.tiangolo.com)
@@ -12,15 +12,51 @@
 
 ---
 
-## 🌌 What Is This?
+## 📋 Submission Details
 
-**Intelligent Space Tutor** is a full-stack AI tutoring application designed for children aged 8–14. Students explore space science through:
+### Which Path & Why
 
-- **Structured lessons** with intro → explore → quiz → reward flow
-- **AI-generated quizzes** on completion (no static questions — every quiz is freshly created by Gemini)
-- **Floating AI chat assistant** — available on every page, powered by a streaming LangGraph agent
-- **Gamified progress** — earn points and cosmetic badges saved persistently in SQLite
-- **RAG-grounded answers** — the AI only teaches verified facts from its knowledge base (no hallucinations)
+**Path 2 — AI Architecture & Backend Engineering**
+
+I chose Path 2 because the core challenge is not building another chatbot UI, but **designing a trustworthy AI tutoring system** for children. The critical problems are:
+
+- **Hallucination prevention** — children need factually accurate answers, not confident guesses
+- **Structured outputs** — the AI must produce consistent, typed responses the UI can safely render
+- **Stateful multi-turn learning** — the AI must remember context across a session
+- **Dynamic content generation** — quizzes must be fresh and topic-relevant, not hardcoded
+
+LangGraph's agent framework with tool-calling and RAG solves all four problems cleanly.
+
+### Trade-offs Made Due to Time Constraints
+
+| Trade-off | What I chose | What I'd do with more time |
+|---|---|---|
+| **Authentication** | Single hardcoded `student_id` | JWT auth with proper user accounts |
+| **Database** | SQLite (file-based) | PostgreSQL with proper migrations |
+| **Quiz difficulty** | Fixed 3 questions | Adaptive difficulty based on past scores |
+| **Knowledge base** | Static JSON docs | Real-time NASA API or Wikipedia ingestion |
+| **Voice** | Text only | ElevenLabs TTS for audio explanations |
+| **Leaderboard** | Not built | Class/global leaderboard with rankings |
+| **Deployment** | Local only | Full Render/Railway cloud deployment |
+
+---
+
+## 🔒 Security & Privacy
+
+| Requirement | Status | Implementation |
+|---|---|---|
+| API keys not in GitHub | ✅ | `.env` is in `.gitignore`, never committed |
+| `.env.example` provided | ✅ | Template file with placeholder values only |
+| Mock student data | ✅ | Hardcoded `student_id = "student_unique_123"` |
+| No real PII | ✅ | No names, emails, or real user data collected |
+| DB not in GitHub | ✅ | `*.db` excluded via `.gitignore` |
+| CORS restricted | ✅ | Configured in FastAPI middleware |
+
+```bash
+# Verify .env was never committed
+git log --all --full-history -- ".env"
+# Empty output = clean ✅
+```
 
 ---
 
@@ -39,127 +75,90 @@
                        ▼
 ┌─────────────────────────────────────────────────────────────┐
 │               FastAPI Backend  :8000                        │
-│  ┌────────────────────────────────────────────────────┐     │
-│  │  WS  /ws/tutor/{student_id}   (streaming chat)     │     │
-│  │  GET /api/quiz/{topic}        (AI quiz generation) │     │
-│  │  POST /api/progress/{lesson}  (save completion)    │     │
-│  │  GET  /api/progress/overview  (load all progress)  │     │
-│  └────────────────────────────────────────────────────┘     │
-└──────────────┬──────────────────────────┬───────────────────┘
-               │                          │
-               ▼                          ▼
-┌──────────────────────────┐  ┌───────────────────────────────┐
-│   LangGraph Agent        │  │   SQLite Database             │
-│                          │  │                               │
-│  🤖 gemini-2.5-flash     │  │  student_progress table       │
-│  🔧 retrieve_facts()     │  │  lesson_progress table        │
-│  🔧 launch_quiz()        │  │  (persists scores + badges)   │
-│  🔧 track_progress()     │  └───────────────────────────────┘
-│  🔧 navigate_ui()        │
-│  📋 TutorResponse schema │
-└──────────┬───────────────┘
-           │ RAG retrieval
-           ▼
-┌──────────────────────────┐
-│   FAISS Vector Store     │
-│  Gemini Embeddings       │
-│  NASA educational docs   │
-│  (data/tutor_index/)     │
-└──────────────────────────┘
+│  WS  /ws/tutor/{student_id}   ← streaming chat             │
+│  GET /api/quiz/{topic}        ← AI quiz generation         │
+│  POST /api/progress/{lesson}  ← save completion            │
+│  GET  /api/progress/overview  ← load all progress          │
+└──────────────┬──────────────────────────────────────────────┘
+               │
+       ┌───────┴────────┐
+       ▼                ▼
+┌─────────────┐  ┌──────────────┐
+│  LangGraph  │  │   SQLite DB  │
+│    Agent    │  │  (progress)  │
+│ gemini-2.5  │  └──────────────┘
+│ RAG tools   │
+└──────┬──────┘
+       ▼
+┌─────────────────┐
+│  FAISS + Gemini │
+│  Embeddings     │
+│  (space facts)  │
+└─────────────────┘
 ```
 
 ---
 
 ## ✨ Key Features
 
-| Feature | Technology | Details |
-|---|---|---|
-| 🤖 **AI Tutor Agent** | LangGraph + Gemini 2.5 Flash | Stateful, multi-turn, tool-calling agent |
-| 📚 **RAG Knowledge Base** | FAISS + Gemini Embeddings | Retrieves space science facts before answering |
-| ❓ **AI Quiz Generation** | Gemini 2.5 Flash | 3 fresh questions per lesson, generated at runtime |
-| 💬 **Streaming Chat** | WebSocket | Token-by-token streaming with typing indicator |
-| 🏅 **Gamification** | SQLite | Points + badges persisted across sessions |
-| 🎨 **Space UI** | React + Tailwind + Framer Motion | Animated star field, glassmorphism, dark theme |
-| 🪐 **Interactive Explore** | Canvas simulation | Gravity simulator with real physics |
+| Feature | Technology |
+|---|---|
+| 🤖 AI Tutor Agent with tool-calling | LangGraph + Gemini 2.5 Flash |
+| 📚 RAG — no hallucinations | FAISS + Gemini Embeddings |
+| ❓ AI-generated quizzes (per lesson) | Gemini at runtime |
+| 💬 Streaming chat (token-by-token) | WebSocket |
+| 🏅 Gamification — points + badges | SQLite persistence |
+| 🎨 Space-themed UI | React + Tailwind + Framer Motion |
+| 🪐 Gravity physics simulator | HTML Canvas |
 
 ---
 
-## 🛠️ Tech Stack
-
-### Backend
-| Layer | Technology |
-|---|---|
-| API Framework | **FastAPI** with WebSocket support |
-| AI Agent | **LangGraph** `create_agent` with tool calling |
-| LLM | **Google Gemini 2.5 Flash** via `langchain-google-genai` |
-| RAG | **FAISS** vector store + **Gemini Embeddings** |
-| Database | **SQLite** (via Python stdlib `sqlite3`) |
-| Server | **Uvicorn** with hot-reload |
-
-### Frontend
-| Layer | Technology |
-|---|---|
-| Framework | **React 18** + **TypeScript** |
-| Build Tool | **Vite** with `@vitejs/plugin-react-swc` |
-| Styling | **Tailwind CSS** + **shadcn/ui** components |
-| Animations | **Framer Motion** |
-| Fonts | Orbitron (space headers) + Inter (body) |
-
----
-
-## 🚀 Quick Start
+## 🚀 How to Run Locally
 
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- Google AI API key ([get one free](https://aistudio.google.com/app/apikey))
+- Google AI API key → [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) (free)
 
-### 1. Clone & Setup Backend
+### 1. Clone & Setup
 
 ```bash
 git clone https://github.com/srinath2934/intelligent-tutor-ai.git
 cd intelligent-tutor-ai
+```
 
+### 2. Backend Setup
+
+```bash
 # Create virtual environment
 python -m venv tutor_env
 
 # Activate (Windows)
 .\tutor_env\Scripts\activate
-# Activate (Mac/Linux)
-source tutor_env/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Configure environment
+copy .env.example .env
+# Edit .env → set GOOGLE_API_KEY=your_key_here
 ```
 
-### 2. Configure Environment
-
-```bash
-# Copy the example env file
-cp .env.example .env
-```
-
-Edit `.env` and add your key:
-```env
-GOOGLE_API_KEY=your_gemini_api_key_here
-```
-
-### 3. Start the Backend
+### 3. Start Backend
 
 ```bash
 .\tutor_env\Scripts\python.exe run.py
-# Server runs at http://127.0.0.1:8000
+# → http://127.0.0.1:8000
+# First run builds FAISS index (~30 seconds)
 ```
 
-First run will build the FAISS index automatically (takes ~30 seconds).
-
-### 4. Start the Frontend
+### 4. Start Frontend
 
 ```bash
 cd frontend
 npm install
 npm run dev
-# App runs at http://localhost:5173
+# → http://localhost:5173
 ```
 
 Open **http://localhost:5173** 🚀
@@ -171,128 +170,57 @@ Open **http://localhost:5173** 🚀
 ```
 intelligent-tutor/
 ├── app/
-│   ├── agent.py          # LangGraph agent with tools & system prompt
-│   ├── api.py            # FastAPI routes (WS + REST endpoints)
-│   ├── db.py             # SQLite CRUD for student & lesson progress
-│   ├── models.py         # Pydantic schemas (TutorResponse, QuizData)
-│   ├── rag.py            # FAISS vector store + retrieval
-│   └── main.py           # App entry (imports api.py)
+│   ├── agent.py       # LangGraph agent + tools + system prompt
+│   ├── api.py         # FastAPI routes (WebSocket + REST)
+│   ├── db.py          # SQLite CRUD (student + lesson progress)
+│   ├── models.py      # Pydantic schemas (TutorResponse, QuizData)
+│   └── rag.py         # FAISS vector store + retrieval
 ├── data/
-│   ├── educational_docs.json    # Space science knowledge base
-│   └── tutor_index/             # Auto-generated FAISS index (gitignored)
+│   ├── educational_docs.json   # Space science knowledge base
+│   └── tutor_index/            # Auto-generated (gitignored)
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── AIChatPanel.tsx      # Floating AI chat with WebSocket
-│   │   │   ├── LessonView.tsx       # Lesson flow (intro→explore→quiz→reward)
-│   │   │   ├── Quiz.tsx             # Quiz renderer
-│   │   │   ├── GravitySimulator.tsx # Interactive physics explore
-│   │   │   └── BadgeReward.tsx      # Completion celebration
-│   │   ├── pages/Index.tsx          # Homepage with lesson cards
-│   │   ├── data/lessons.ts          # Lesson definitions
-│   │   └── lib/progress.ts          # localStorage progress sync
-│   └── vite.config.js               # Proxy: /api + /ws → :8000
-├── .env.example          # Environment template
-├── requirements.txt      # Python dependencies
-└── run.py                # Uvicorn server launcher
+│   └── src/
+│       ├── components/
+│       │   ├── AIChatPanel.tsx     # Floating AI chat (WebSocket)
+│       │   ├── LessonView.tsx      # Intro → Explore → Quiz → Reward
+│       │   ├── Quiz.tsx            # Quiz renderer
+│       │   └── GravitySimulator.tsx
+│       ├── pages/Index.tsx         # Homepage
+│       └── lib/progress.ts         # localStorage sync
+├── .env.example        # ← Safe template (no real keys)
+├── .gitignore          # ← Excludes .env, *.db, node_modules
+├── requirements.txt
+└── run.py
 ```
 
 ---
 
 ## 🔌 API Reference
 
-### WebSocket — AI Chat
 ```
-WS /ws/tutor/{student_id}
-Send: { "question": "What is a black hole?" }
-Receive stream:
-  { "type": "start" }
-  { "type": "text", "chunk": "A black hole..." }
-  { "type": "final", "response": { "explanation": "...", "quizData": {...}, ... } }
-```
-
-### REST — AI Quiz Generation
-```
-GET /api/quiz/{lesson_topic}
-Response: {
-  "questions": [
-    { "id": "q1", "question": "...", "options": ["A","B","C","D"], "correctIndex": 0, "explanation": "..." }
-  ]
-}
-```
-
-### REST — Progress
-```
-POST /api/progress/{lesson_id}   — Save lesson completion
-GET  /api/progress/overview      — Get all lesson progress
-GET  /progress/{student_id}      — Get global score + badges
+WS  /ws/tutor/{student_id}     Streaming AI tutor chat
+GET /api/quiz/{topic}          AI-generated quiz questions
+POST /api/progress/{lesson_id} Save lesson completion to DB
+GET /api/progress/overview     Load all saved lesson progress
+GET /progress/{student_id}     Global score + badges
 ```
 
 ---
 
-## 🤖 How the AI Agent Works
-
-The LangGraph agent follows a strict protocol on every message:
-
-```
-Student Question
-    ↓
-1. retrieve_facts(query)     ← Always first! Grounds answer in knowledge base
-    ↓
-2. [Optional] launch_quiz()  ← If explanation is complete
-         navigate_ui()       ← If a visual simulation would help
-         show_visual()       ← For interactive demos
-    ↓
-3. track_progress()          ← Awards points + badges on correct answers
-    ↓
-4. Structured Output         ← TutorResponse with explanation, quizData,
-                                suggestedTopics, hintText, score, badges
-```
-
-The agent **never hallucinates** — it's instructed to always retrieve facts first and teach only from verified sources.
-
----
-
-## 🎮 Student Experience Flow
-
-```
-🏠 Home  →  📖 Lesson Intro  →  🔬 Explore (Gravity Sim)
-                                         ↓
-                              ❓ AI Quiz (3 fresh questions)
-                                         ↓
-                              🏅 Badge Reward + Score Save
-                                         ↓
-                              💬 Chat with AI anytime (floating button)
-```
-
----
-
-## 📝 Environment Variables
+## � Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `GOOGLE_API_KEY` | ✅ Yes | Google Gemini API key |
-
-Get a free key at [Google AI Studio](https://aistudio.google.com/app/apikey). The free tier includes 15 RPM and 1M tokens/day on `gemini-2.5-flash`.
+| `GOOGLE_API_KEY` | ✅ | Gemini API key — never commit this |
 
 ---
 
-## 🤝 Contributing
+## � License
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feat/your-feature`
-3. Commit changes: `git commit -m "feat: add your feature"`
-4. Push: `git push origin feat/your-feature`
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-MIT License — feel free to use, modify, and distribute.
+MIT License
 
 ---
 
 <div align="center">
-Built with ❤️ using LangGraph + Gemini + React
+Built with ❤️ for the Spacey Science Technical Challenge — Path 2: AI Architecture
 </div>

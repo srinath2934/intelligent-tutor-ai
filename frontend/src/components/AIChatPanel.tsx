@@ -7,9 +7,11 @@ interface Message {
     content: string;
 }
 
-const STUDENT_ID = "student_unique_123";
+interface AIChatPanelProps {
+    studentId: string;
+}
 
-const AIChatPanel = () => {
+const AIChatPanel = ({ studentId }: AIChatPanelProps) => {
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([
         { role: "tutor", content: "👋 Hi Explorer! Ask me anything about space, planets, or the cosmos! 🚀✨" }
@@ -23,7 +25,7 @@ const AIChatPanel = () => {
     useEffect(() => {
         const connect = () => {
             const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-            const socket = new WebSocket(`${proto}://${window.location.host}/ws/tutor/${STUDENT_ID}`);
+            const socket = new WebSocket(`${proto}://${window.location.host}/ws/tutor/${studentId}`);
             ws.current = socket;
 
             socket.onopen = () => setIsConnected(true);
