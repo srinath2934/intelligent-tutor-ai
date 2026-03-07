@@ -34,11 +34,13 @@ const LessonView = ({ lesson, studentId, onBack }: LessonViewProps) => {
     }
   }, [lesson.id]);
 
+  const API_BASE = import.meta.env.VITE_API_URL || "";
+
   const fetchAIQuiz = async () => {
     setQuizLoading(true);
     setQuizError(false);
     try {
-      const response = await fetch(`/api/quiz/${encodeURIComponent(lesson.title)}`);
+      const response = await fetch(`${API_BASE}/api/quiz/${encodeURIComponent(lesson.title)}`);
       if (!response.ok) throw new Error("Quiz fetch failed");
       const data = await response.json();
       setAiQuestions(data.questions);
@@ -76,7 +78,7 @@ const LessonView = ({ lesson, studentId, onBack }: LessonViewProps) => {
 
     // Save to server DB with real student ID
     try {
-      await fetch(`/api/progress/${lesson.id}?student_id=${studentId}`, {
+      await fetch(`${API_BASE}/api/progress/${lesson.id}?student_id=${studentId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

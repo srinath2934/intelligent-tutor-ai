@@ -24,8 +24,10 @@ const AIChatPanel = ({ studentId }: AIChatPanelProps) => {
 
     useEffect(() => {
         const connect = () => {
-            const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-            const socket = new WebSocket(`${proto}://${window.location.host}/ws/tutor/${studentId}`);
+            const apiBase = import.meta.env.VITE_API_URL || window.location.host;
+            const proto = apiBase.startsWith('https://') ? 'wss' : (window.location.protocol === 'https:' ? 'wss' : 'ws');
+            const host = apiBase.replace(/^https?:\/\//, '').replace(/\/$/, '');
+            const socket = new WebSocket(`${proto}://${host}/ws/tutor/${studentId}`);
             ws.current = socket;
 
             socket.onopen = () => setIsConnected(true);

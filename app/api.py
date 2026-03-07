@@ -29,15 +29,16 @@ ALLOWED_ORIGINS = [
     "http://localhost:5174",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
-    os.getenv("FRONTEND_URL", ""),  # production URL from .env
+    "https://intelligent-tutor-ui.onrender.com",  # Render static site
+    os.getenv("FRONTEND_URL", ""),  # extra production URL from .env
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o for o in ALLOWED_ORIGINS if o],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # ─── Input Sanitization ──────────────────────────────────────
